@@ -24,7 +24,7 @@ A modern, feature-rich diary application built with Next.js 14, TypeScript, and 
 
 ### 🔍 Search & Filter
 - Advanced search functionality
-- YouTube-style time period filters (Last week, Last month, etc.)
+- Period filters (Last week, Last month, etc.)
 - Tag-based filtering
 - Sort by date, title, or relevance
 

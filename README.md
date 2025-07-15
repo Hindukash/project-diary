@@ -57,7 +57,7 @@ A modern, feature-rich diary application built with Next.js 14, TypeScript, and 
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/Hindukash/project-diary.git
 cd project-diary
 ```
 

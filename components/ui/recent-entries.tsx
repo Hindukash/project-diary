@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Entry } from "@/data/types";
-import { getRecentlyAccessedEntries } from "@/lib/entries";
+import { getRecentlyAccessedEntriesDetails } from "@/lib/entries";
 import { formatDateTime } from "@/lib/utils";
 import { Clock, FileText } from "lucide-react";
 
@@ -18,7 +18,7 @@ export function RecentEntries({ refreshKey, onEntrySelect, selectedEntryId }: Re
   useEffect(() => {
     const loadRecentEntries = async () => {
       try {
-        const entries = await getRecentlyAccessedEntries();
+        const entries = await getRecentlyAccessedEntriesDetails();
         setRecentEntries(entries);
       } catch (error) {
         console.error('Failed to load recent entries:', error);

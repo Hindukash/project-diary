@@ -3,6 +3,21 @@ import { supabase } from './supabase';
 import { generateId, extractTextFromMarkdown } from './utils';
 import { createTag, getTagByName, getAllTags } from './tags-db';
 
+// Helper function to get current user ID
+async function getCurrentUserId(): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id || null;
+}
+
+// Helper function to ensure user is authenticated
+async function requireAuth(): Promise<string> {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    throw new Error('User must be authenticated to perform this action');
+  }
+  return userId;
+}
+
 // Recently accessed entries - keep in localStorage for now
 const RECENT_ENTRIES_KEY = 'project-diary-recent-entries';
 
@@ -144,6 +159,12 @@ export async function createEntry(
     const plainText = extractTextFromMarkdown(content);
     const summary = plainText.substring(0, 150) + (plainText.length > 150 ? '...' : '');
 
+    // Get current user - RLS will handle the filtering automatically
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User must be authenticated to create entries');
+    }
+
     // Create any new tags that don't exist yet
     const tagObjects = await Promise.all(
       tags.map(async (tagName) => {
@@ -155,7 +176,7 @@ export async function createEntry(
       })
     );
 
-    // Create the entry
+    // Create the entry with user_id
     const { data: newEntry, error: entryError } = await supabase
       .from('entries')
       .insert([
@@ -165,6 +186,7 @@ export async function createEntry(
           summary,
           images: images,
           version: 1,
+          user_id: user.id,
           created_at: now.toISOString(),
           updated_at: now.toISOString()
         }

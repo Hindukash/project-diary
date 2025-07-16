@@ -9,7 +9,8 @@
       "Bash(rg:*)",
       "Bash(npx tsc:*)",
       "Bash(npm run seed:*)",
-      "Bash(npm run clear-db:*)"
+      "Bash(npm run clear-db:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

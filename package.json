@@ -1,14 +1,20 @@
 {
   "name": "project-diary",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:3001": "next dev --port 3001",
+    "dev:3002": "next dev --port 3002",
+    "dev:8080": "next dev --port 8080",
+    "dev:8000": "next dev --port 8000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "seed": "node scripts/seed-database.js",
-    "clear-db": "node scripts/clear-database.js"
+    "clear-db": "node scripts/clear-database.js",
+    "migrate-auth": "node scripts/migrate-to-auth.js",
+    "create-admin": "node scripts/create-admin-user.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.51.0",

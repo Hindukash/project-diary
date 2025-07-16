@@ -95,7 +95,13 @@ export async function getTagByName(name: string): Promise<Tag | undefined> {
 
 export async function createTag(name: string, color?: string): Promise<Tag> {
   return retryOperation(async () => {
-    // Check if tag already exists
+    // Get current user - RLS will handle the filtering automatically
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User must be authenticated to create tags');
+    }
+
+    // Check if tag already exists for this user
     const existingTag = await getTagByName(name);
     if (existingTag) {
       return existingTag;
@@ -111,6 +117,7 @@ export async function createTag(name: string, color?: string): Promise<Tag> {
         {
           name,
           color: randomColor,
+          user_id: user.id,
           created_at: new Date().toISOString()
         }
       ])

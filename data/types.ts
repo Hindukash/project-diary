@@ -32,6 +32,7 @@ export interface SearchFilters {
   tags?: string[];
   dateFrom?: Date;
   dateTo?: Date;
+  period?: 'today' | 'week' | 'month' | 'year';
   sortBy?: 'createdAt' | 'updatedAt' | 'title';
   sortOrder?: 'asc' | 'desc';
 }

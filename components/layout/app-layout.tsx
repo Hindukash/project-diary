@@ -6,6 +6,8 @@ import { Sidebar } from "./sidebar";
 import { ContentListPanel } from "./content-list-panel";
 import { Entry } from "@/data/types";
 import { getAllEntries, getEntryById, addToRecentlyAccessed, createEntry } from "@/lib/entries";
+import { useAuth } from "@/contexts/AuthContext";
+import { ProtectedRoute, UserProfile } from "@/components/auth";
 
 // Import EntryViewer component
 import { EntryViewer } from "../ui/entry-viewer";
@@ -26,6 +28,9 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [currentView, setCurrentView] = useState('dashboard');
   const [isEntryListCollapsed, setIsEntryListCollapsed] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  
+  const { user } = useAuth();
 
   // Initialize with first entry on mount
   useEffect(() => {
@@ -129,6 +134,14 @@ export function AppLayout({ children }: AppLayoutProps) {
     setIsCreateModalOpen(false);
   };
 
+  const handleProfileClick = () => {
+    setIsProfileModalOpen(true);
+  };
+
+  const handleProfileClose = () => {
+    setIsProfileModalOpen(false);
+  };
+
   const renderMainContent = () => {
     switch (currentView) {
       case 'dashboard':
@@ -178,6 +191,35 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <div>
                   <h2 className="text-2xl font-semibold mb-3 text-gray-900 dark:text-gray-100">Application Settings</h2>
                   <div className="space-y-4">
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                      <h3 className="font-medium mb-2">Account</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Manage your account settings and profile information.
+                      </p>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-4">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+                            <span className="text-white text-sm">👤</span>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {user?.email || 'Not signed in'}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              User account and profile settings
+                            </p>
+                          </div>
+                          <div className="ml-4">
+                            <button
+                              onClick={handleProfileClick}
+                              className="px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm"
+                            >
+                              Edit Profile
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                       <h3 className="font-medium mb-2">Theme Preferences</h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
@@ -243,11 +285,13 @@ export function AppLayout({ children }: AppLayoutProps) {
   };
 
   return (
-    <div className="h-screen flex flex-col">
-      <Header 
-        onSettingsClick={() => handleViewChange('settings')}
-        currentView={currentView}
-      />
+    <ProtectedRoute>
+      <div className="h-screen flex flex-col">
+        <Header 
+          onSettingsClick={() => handleViewChange('settings')}
+          onProfileClick={handleProfileClick}
+          currentView={currentView}
+        />
       <div className="flex-1 flex overflow-hidden">
         <div className="w-[300px] border-r border-gray-200 dark:border-gray-700">
           <Sidebar 
@@ -266,17 +310,28 @@ export function AppLayout({ children }: AppLayoutProps) {
         </div>
       </div>
 
-      {/* Create Entry Modal */}
-      <Modal
-        isOpen={isCreateModalOpen}
-        onClose={handleCancelCreate}
-        title="Create New Entry"
-      >
-        <EntryForm
-          onSave={handleSaveEntry}
-          onCancel={handleCancelCreate}
-        />
-      </Modal>
-    </div>
+        {/* Create Entry Modal */}
+        <Modal
+          isOpen={isCreateModalOpen}
+          onClose={handleCancelCreate}
+          title="Create New Entry"
+        >
+          <EntryForm
+            onSave={handleSaveEntry}
+            onCancel={handleCancelCreate}
+          />
+        </Modal>
+
+        {/* Profile Modal */}
+        <Modal
+          isOpen={isProfileModalOpen}
+          onClose={handleProfileClose}
+          title="User Profile"
+          className="max-w-md"
+        >
+          <UserProfile onClose={handleProfileClose} />
+        </Modal>
+      </div>
+    </ProtectedRoute>
   );
 }

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Eye, EyeOff, Mail, Lock, User, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Loader2, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PasswordStrengthIndicator } from "./password-strength-indicator";
 
 interface SignupFormProps {
   onSuccess?: () => void;
@@ -19,6 +20,7 @@ export function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const { signUp } = useAuth();
 
@@ -33,8 +35,8 @@ export function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormProps) {
       return false;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters long");
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long");
       return false;
     }
 
@@ -59,13 +61,55 @@ export function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormProps) {
 
     try {
       await signUp(email, password, fullName.trim() || undefined);
-      onSuccess?.();
+      setShowSuccessMessage(true);
+      // Keep the success message visible for 3 seconds before calling onSuccess
+      setTimeout(() => {
+        onSuccess?.();
+      }, 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create account");
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (showSuccessMessage) {
+    return (
+      <div className="w-full max-w-md mx-auto p-6">
+        <div className="text-center mb-8">
+          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Check your email!
+          </h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+            We've sent a confirmation email to:
+          </p>
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mt-1">
+            {email}
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              <strong>Next steps:</strong>
+            </p>
+            <ol className="text-sm text-blue-800 dark:text-blue-200 mt-2 list-decimal list-inside space-y-1">
+              <li>Check your email inbox</li>
+              <li>Click the confirmation link</li>
+              <li>Return here to sign in</li>
+            </ol>
+          </div>
+
+          <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md border border-yellow-200 dark:border-yellow-800">
+            <p className="text-xs text-yellow-800 dark:text-yellow-200">
+              <strong>Didn't receive the email?</strong> Check your spam folder or try signing up again.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-md mx-auto p-6">
@@ -168,9 +212,10 @@ export function SignupForm({ onSuccess, onSwitchToLogin }: SignupFormProps) {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Must be at least 6 characters
-          </p>
+          <PasswordStrengthIndicator 
+            password={password} 
+            className="mt-2"
+          />
         </div>
 
         <div>

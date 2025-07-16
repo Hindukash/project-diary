@@ -4,6 +4,7 @@ import '../styles/globals.css';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { AppLayout } from '@/components/layout/app-layout';
+import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -29,6 +30,17 @@ export default function RootLayout({
         >
           <AuthProvider>
             <AppLayout>{children}</AppLayout>
+            <Toaster 
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: 'var(--background)',
+                  color: 'var(--foreground)',
+                  border: '1px solid var(--border)',
+                },
+              }}
+            />
           </AuthProvider>
         </ThemeProvider>
       </body>

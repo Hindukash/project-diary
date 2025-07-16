@@ -47,7 +47,14 @@ export const auth = {
   },
 
   // Sign in with email and password
-  async signIn(email: string, password: string) {
+  async signIn(email: string, password: string, rememberMe = false) {
+    // Store remember me preference
+    if (rememberMe) {
+      localStorage.setItem('auth_remember_me', 'true');
+    } else {
+      localStorage.removeItem('auth_remember_me');
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -62,6 +69,9 @@ export const auth = {
 
   // Sign out
   async signOut() {
+    // Clear remember me preference
+    localStorage.removeItem('auth_remember_me');
+    
     const { error } = await supabase.auth.signOut();
     
     if (error) {
@@ -116,6 +126,11 @@ export const auth = {
   // Listen to auth changes
   onAuthStateChange(callback: (event: string, session: Session | null) => void) {
     return supabase.auth.onAuthStateChange(callback);
+  },
+
+  // Get remember me preference
+  getRememberMe() {
+    return localStorage.getItem('auth_remember_me') === 'true';
   },
 };
 

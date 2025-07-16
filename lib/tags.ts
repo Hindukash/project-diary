@@ -1,149 +1,166 @@
 import { Tag } from '@/data/types';
-import { mockTags } from '@/data/mockData';
-import { generateId } from './utils';
 
-// Check if we should use database or mock data
-const USE_DATABASE = process.env.NEXT_PUBLIC_USE_DATABASE === 'true';
+// Database operations
+const multiUserDb = require('./multi-user-db');
 
-// Import database operations conditionally
-let multiUserDb: any;
-if (USE_DATABASE) {
-  try {
-    multiUserDb = require('./multi-user-db');
-    console.log('📊 Tags: Using MULTI-USER DATABASE mode');
-  } catch (error) {
-    console.error('Failed to load multi-user-db for tags, falling back to mock data:', error);
-  }
-}
+console.log('📊 Tags: Using MULTI-USER DATABASE mode');
 
-if (!USE_DATABASE || !multiUserDb) {
-  console.log('📊 Tags: Using MOCK mode');
-}
+// Tag colors for the application
+const TAG_COLORS = [
+  '#3B82F6', // Blue
+  '#10B981', // Green
+  '#F59E0B', // Yellow
+  '#EF4444', // Red
+  '#8B5CF6', // Purple
+  '#EC4899', // Pink
+  '#06B6D4', // Cyan
+  '#84CC16', // Lime
+  '#F97316', // Orange
+  '#6366F1', // Indigo
+];
+
+// =============================================
+// DATABASE OPERATIONS (Production Mode)
+// =============================================
 
 export async function getAllTags(): Promise<Tag[]> {
-  if (USE_DATABASE && multiUserDb) {
-    try {
-      return await multiUserDb.getUserTags();
-    } catch (error) {
-      console.error('Database operation failed, falling back to mock data:', error);
-    }
+  try {
+    return await multiUserDb.getUserTags();
+  } catch (error) {
+    console.error('Failed to fetch tags:', error);
+    throw new Error('Failed to fetch tags from database');
   }
-  return mockTags.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function getTagById(id: string): Promise<Tag | undefined> {
-  if (USE_DATABASE && multiUserDb) {
-    try {
-      return await multiUserDb.getUserTagById(id);
-    } catch (error) {
-      console.error('Database operation failed, falling back to mock data:', error);
-    }
+  try {
+    return await multiUserDb.getUserTagById(id);
+  } catch (error) {
+    console.error('Failed to fetch tag:', error);
+    return undefined;
   }
-  return mockTags.find(tag => tag.id === id);
 }
 
 export async function getTagByName(name: string): Promise<Tag | undefined> {
-  if (USE_DATABASE && multiUserDb) {
-    try {
-      return await multiUserDb.getUserTagByName(name);
-    } catch (error) {
-      console.error('Database operation failed, falling back to mock data:', error);
-    }
+  try {
+    return await multiUserDb.getUserTagByName(name);
+  } catch (error) {
+    console.error('Failed to fetch tag by name:', error);
+    return undefined;
   }
-  return mockTags.find(tag => tag.name === name);
 }
 
-export async function createTag(name: string, color: string): Promise<Tag> {
-  if (USE_DATABASE && multiUserDb) {
-    try {
-      return await multiUserDb.createUserTag(name, color);
-    } catch (error) {
-      console.error('Database operation failed, falling back to mock data:', error);
-    }
+export async function createTag(name: string, color?: string): Promise<Tag> {
+  try {
+    return await multiUserDb.createUserTag(name, color);
+  } catch (error) {
+    console.error('Failed to create tag:', error);
+    throw new Error('Failed to create tag in database');
   }
-
-  // Mock data fallback
-  const newTag: Tag = {
-    id: generateId(),
-    name,
-    color,
-    createdAt: new Date()
-  };
-
-  mockTags.push(newTag);
-  return newTag;
 }
 
-export async function updateTag(id: string, updates: Partial<Tag>): Promise<Tag | undefined> {
-  if (USE_DATABASE && multiUserDb) {
-    try {
-      return await multiUserDb.updateUserTag(id, updates);
-    } catch (error) {
-      console.error('Database operation failed, falling back to mock data:', error);
-    }
+export async function updateTag(id: string, updates: Partial<Pick<Tag, 'name' | 'color'>>): Promise<Tag | null> {
+  try {
+    return await multiUserDb.updateUserTag(id, updates);
+  } catch (error) {
+    console.error('Failed to update tag:', error);
+    throw new Error('Failed to update tag in database');
   }
-
-  // Mock data fallback
-  const tagIndex = mockTags.findIndex(tag => tag.id === id);
-  if (tagIndex === -1) return undefined;
-
-  const updatedTag: Tag = {
-    ...mockTags[tagIndex],
-    ...updates
-  };
-
-  mockTags[tagIndex] = updatedTag;
-  return updatedTag;
 }
 
 export async function deleteTag(id: string): Promise<boolean> {
-  if (USE_DATABASE && multiUserDb) {
-    try {
-      return await multiUserDb.deleteUserTag(id);
-    } catch (error) {
-      console.error('Database operation failed, falling back to mock data:', error);
-    }
+  try {
+    return await multiUserDb.deleteUserTag(id);
+  } catch (error) {
+    console.error('Failed to delete tag:', error);
+    throw new Error('Failed to delete tag from database');
   }
-
-  // Mock data fallback
-  const index = mockTags.findIndex(tag => tag.id === id);
-  if (index !== -1) {
-    mockTags.splice(index, 1);
-    return true;
-  }
-  return false;
-}
-
-// Utility functions
-export function getTagColors(): string[] {
-  return [
-    '#3B82F6', // Blue
-    '#10B981', // Green
-    '#F59E0B', // Yellow
-    '#EF4444', // Red
-    '#8B5CF6', // Purple
-    '#EC4899', // Pink
-    '#06B6D4', // Cyan
-    '#84CC16', // Lime
-    '#F97316', // Orange
-    '#6366F1', // Indigo
-  ];
 }
 
 export async function getTagUsageCount(tagId: string): Promise<number> {
-  if (USE_DATABASE && multiUserDb) {
-    try {
-      return await multiUserDb.getTagUsageCount(tagId);
-    } catch (error) {
-      console.error('Database operation failed for tag usage count:', error);
-      return 0;
-    }
+  try {
+    return await multiUserDb.getTagUsageCount(tagId);
+  } catch (error) {
+    console.error('Failed to get tag usage count:', error);
+    return 0;
   }
-
-  // Mock data fallback - this would need to be implemented properly
-  // For now, return 0 as we don't track usage in mock data
-  return 0;
 }
 
-// Export direct multi-user functions for advanced usage
-export const multiUserTagOperations = multiUserDb || {};
+// =============================================
+// UTILITY FUNCTIONS
+// =============================================
+
+export function getTagColors(): string[] {
+  return [...TAG_COLORS];
+}
+
+export function getRandomTagColor(): string {
+  return TAG_COLORS[Math.floor(Math.random() * TAG_COLORS.length)];
+}
+
+export async function getUnusedTags(): Promise<Tag[]> {
+  try {
+    const allTags = await getAllTags();
+    const unusedTags: Tag[] = [];
+    
+    for (const tag of allTags) {
+      const usageCount = await getTagUsageCount(tag.id);
+      if (usageCount === 0) {
+        unusedTags.push(tag);
+      }
+    }
+    
+    return unusedTags;
+  } catch (error) {
+    console.error('Failed to get unused tags:', error);
+    return [];
+  }
+}
+
+export async function getMostUsedTags(limit: number = 10): Promise<Array<Tag & { usageCount: number }>> {
+  try {
+    const allTags = await getAllTags();
+    const tagsWithUsage = await Promise.all(
+      allTags.map(async (tag) => ({
+        ...tag,
+        usageCount: await getTagUsageCount(tag.id)
+      }))
+    );
+    
+    return tagsWithUsage
+      .sort((a, b) => b.usageCount - a.usageCount)
+      .slice(0, limit);
+  } catch (error) {
+    console.error('Failed to get most used tags:', error);
+    return [];
+  }
+}
+
+export async function getTagStats() {
+  try {
+    const allTags = await getAllTags();
+    const tagUsages = await Promise.all(
+      allTags.map(tag => getTagUsageCount(tag.id))
+    );
+    
+    const totalUsage = tagUsages.reduce((sum, usage) => sum + usage, 0);
+    const usedTags = tagUsages.filter(usage => usage > 0).length;
+    
+    return {
+      totalTags: allTags.length,
+      usedTags,
+      unusedTags: allTags.length - usedTags,
+      totalUsage,
+      averageUsagePerTag: allTags.length > 0 ? Math.round(totalUsage / allTags.length * 100) / 100 : 0,
+    };
+  } catch (error) {
+    console.error('Failed to get tag stats:', error);
+    return {
+      totalTags: 0,
+      usedTags: 0,
+      unusedTags: 0,
+      totalUsage: 0,
+      averageUsagePerTag: 0,
+    };
+  }
+}

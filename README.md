@@ -1,73 +1,98 @@
 # Project Diary
 
-A modern, feature-rich diary application built with Next.js 14, TypeScript, Tailwind CSS, and Supabase.
+A secure, multi-user diary application built with Next.js 14, TypeScript, Tailwind CSS, and Supabase authentication.
 
-[![Version](https://img.shields.io/badge/version-0.0.3-blue.svg)](https://github.com/Hindukash/project-diary/releases/tag/v0.0.3)
+[![Version](https://img.shields.io/badge/version-0.0.4-blue.svg)](https://github.com/Hindukash/project-diary/releases/tag/v0.0.4)
 [![Supabase](https://img.shields.io/badge/database-Supabase-green.svg)](https://supabase.com)
 [![TypeScript](https://img.shields.io/badge/language-TypeScript-blue.svg)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/framework-Next.js%2014-black.svg)](https://nextjs.org/)
+[![Production Ready](https://img.shields.io/badge/status-Production%20Ready-green.svg)](https://github.com/Hindukash/project-diary)
 
 ## Features
 
-### 🗄️ **Database Integration (NEW in v0.0.3)**
-- **Supabase database** for persistent data storage
-- **Real-time data synchronization** across sessions
-- **Full-text search** capabilities with database indexing
-- **Entry versioning** and history tracking
-- **Production-ready** relational schema
+### 🔐 **Multi-User Authentication (NEW in v0.0.4)**
+- **Complete authentication system** with email/password signup and signin
+- **User profile management** with customizable preferences
+- **Row Level Security (RLS)** for complete data isolation between users
+- **Secure session management** with automatic token handling
+- **Password reset flow** with email-based recovery
+- **Email confirmation** with account verification
+- **Remember me functionality** for extended sessions
 
-### 📝 Entry Management
-- Create, edit, and delete diary entries with **persistent storage**
-- Rich text editor with markdown support
-- **Database-driven** entry versioning and history tracking
-- Advanced search through entries by title or content
-- **Smart data switching** between database and mock data modes
+### 🛡️ **Enterprise-Grade Security**
+- **Row Level Security policies** ensuring users only see their own data
+- **Multi-user database architecture** with complete data isolation
+- **Secure authentication context** with centralized state management
+- **Protected routes** requiring authentication
+- **Password strength validation** with real-time feedback
+- **Automatic user profile creation** via database triggers
 
-### 🖼️ Media Support
-- Drag & drop image uploads
-- Image preview and management
-- Full-screen image viewer with zoom and pan
-- Download images functionality
+### 📝 **Entry Management**
+- Create, edit, and delete diary entries with **user-specific storage**
+- Rich text editor with markdown support and live preview
+- **User-isolated** entry versioning and history tracking
+- Advanced search through your own entries by title or content
+- **Database-driven** operations with optimized queries
 
-### 🏷️ Organization
-- Create and manage colored tags with **database persistence**
-- Filter entries by tags with **optimized queries**
-- **Real-time tag synchronization** across components
-- Tag-based organization system with **relational integrity**
+### 🖼️ **Media Support**
+- Drag & drop image uploads with preview
+- Image management and full-screen viewer
+- Zoom and pan functionality
+- Download images capability
+- **User-specific** image storage
+
+### 🏷️ **Personal Organization**
+- Create and manage colored tags **per user**
+- Filter entries by your own tags with **optimized queries**
+- **User-specific** tag synchronization across components
+- Personal tag-based organization system
 - Automatic tag cleanup and usage tracking
 
-### 🔍 Search & Filter
-- Advanced search functionality
+### 🔍 **Advanced Search & Filter**
+- Full-text search within your own entries
 - Period filters (Last week, Last month, etc.)
-- Tag-based filtering
+- Tag-based filtering with user isolation
 - Sort by date, title, or relevance
+- **Real-time search** with database indexing
 
-### 📤 Export Options
-- Export individual entries (Markdown, JSON, TXT)
-- Bulk export functionality
+### 📤 **Export Options**
+- Export your individual entries (Markdown, JSON, TXT)
+- Bulk export functionality for your data
 - Customizable export formats
+- **User-specific** export operations
 
-### 🎨 User Experience
-- Dark/Light theme toggle
-- Responsive design
-- Clean, modern interface
-- Keyboard shortcuts and navigation
+### 🎨 **Professional User Experience**
+- **Toast notifications** for real-time feedback
+- **Dark/Light theme** toggle with persistence
+- **Responsive design** for all device sizes
+- **Loading states** and smooth transitions
+- **Professional landing page** for unauthenticated users
+- **Clean, modern interface** with intuitive navigation
+
+### ✨ **Enhanced UX Features (NEW in v0.0.4)**
+- **Password strength indicator** with visual feedback
+- **Enhanced error handling** with user-friendly messages
+- **Smooth authentication flow** with proper redirects
+- **Professional forms** with validation and loading states
+- **Real-time notifications** for all user actions
 
 ## Tech Stack
 
 - **Framework**: Next.js 14 with App Router
-- **Language**: TypeScript
-- **Database**: Supabase (PostgreSQL)
-- **Styling**: Tailwind CSS
+- **Language**: TypeScript with strict type checking
+- **Database**: Supabase (PostgreSQL) with Row Level Security
+- **Authentication**: Supabase Auth with email/password
+- **Styling**: Tailwind CSS with dark/light theme support
 - **Icons**: Lucide React
-- **Development**: Docker support
-- **ORM**: Supabase Client with TypeScript
+- **State Management**: React Context for authentication
+- **Development**: Docker support with hot reload
+- **Security**: Row Level Security (RLS) for data isolation
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js 18+ 
-- Supabase account (for database)
+- Supabase account (for database and authentication)
 - Docker (optional)
 
 ### Installation
@@ -92,11 +117,13 @@ cp .env.local.example .env.local
 # See docs/supabase-setup.md for detailed instructions
 ```
 
-4. Initialize database:
+4. Initialize database schema:
 ```bash
-# Run the SQL schema in your Supabase dashboard
-# Then seed with sample data
-npm run seed
+# Apply the authentication schema in your Supabase dashboard
+# Copy and run database/auth-schema.sql in Supabase SQL Editor
+
+# Then create an admin user for testing
+npm run create-admin
 ```
 
 5. Run the development server:
@@ -119,40 +146,53 @@ docker-compose up -d
 
 ```
 project-diary/
+├── app/                     # Next.js app directory
+│   ├── layout.tsx          # Root layout with auth provider
+│   ├── page.tsx            # Home page
+│   └── reset-password/     # Password reset page
 ├── components/
-│   ├── layout/          # Layout components (sidebar, app-layout, etc.)
-│   └── ui/              # UI components (forms, modals, etc.)
-├── database/
-│   └── schema.sql       # Supabase database schema
-├── docs/
-│   └── supabase-setup.md # Database setup guide
-├── data/
-│   ├── types.ts         # TypeScript type definitions
-│   ├── database.types.ts # Generated database types
-│   └── mockData.ts      # Mock data for development
+│   ├── auth/               # Authentication components
+│   │   ├── auth-modal.tsx  # Authentication modal
+│   │   ├── login-form.tsx  # Login form
+│   │   ├── signup-form.tsx # Signup form
+│   │   ├── forgot-password-form.tsx # Password reset form
+│   │   ├── user-profile.tsx # User profile management
+│   │   └── protected-route.tsx # Route protection
+│   ├── landing/            # Landing page components
+│   ├── layout/             # Layout components (sidebar, header, etc.)
+│   └── ui/                 # Reusable UI components
+├── contexts/
+│   └── AuthContext.tsx     # Authentication state management
 ├── lib/
-│   ├── entries.ts       # Entry management functions (mock data)
-│   ├── entries-db.ts    # Entry database operations (Supabase)
-│   ├── tags.ts          # Tag management functions (mock data)
-│   ├── tags-db.ts       # Tag database operations (Supabase)
-│   ├── supabase.ts      # Supabase client configuration
-│   └── utils.ts         # Utility functions
+│   ├── auth.ts            # Authentication functions
+│   ├── auth-db.ts         # Database authentication helpers
+│   ├── multi-user-db.ts   # Multi-user database operations
+│   ├── entries.ts         # Entry management functions
+│   ├── tags.ts            # Tag management functions
+│   ├── supabase.ts        # Supabase client configuration
+│   └── utils.ts           # Utility functions
+├── database/
+│   ├── schema.sql         # Main database schema
+│   └── auth-schema.sql    # Authentication schema
 ├── scripts/
-│   ├── seed-database.js # Database seeding utility
-│   └── clear-database.js # Database cleanup utility
-├── app/                 # Next.js app directory
-└── public/              # Static assets
+│   ├── create-admin-user.js # Admin user creation utility
+│   ├── migrate-to-auth.js   # Migration to multi-user
+│   └── seed-database.js     # Database seeding utility
+├── data/
+│   ├── types.ts           # TypeScript type definitions
+│   └── database.types.ts  # Generated database types
+└── docs/                  # Documentation
 ```
 
-### Database Setup
+## Authentication Setup
 
-For detailed database setup instructions, see [docs/supabase-setup.md](docs/supabase-setup.md).
+Project Diary v0.0.4 features complete multi-user authentication:
 
-Quick setup:
+### Quick Setup
 1. Create a Supabase project
 2. Copy your project URL and anon key to `.env.local`
-3. Run the SQL schema from `database/schema.sql` in Supabase SQL Editor
-4. Seed with sample data: `npm run seed`
+3. Run the authentication schema from `database/auth-schema.sql`
+4. Create an admin user: `npm run create-admin`
 
 ### Environment Variables
 
@@ -160,61 +200,63 @@ Create a `.env.local` file:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_KEY=your-supabase-service-key
 NEXT_PUBLIC_USE_DATABASE=true
 ```
 
-## Key Components
+### Default Admin Account
+After running `npm run create-admin`:
+- **Email**: admin@projectdiary.local
+- **Password**: Admin123!
+
+## Key Features in Detail
+
+### Multi-User Authentication
+- Complete signup/signin flow with email verification
+- Automatic user profile creation via database triggers
+- Secure session management with token refresh
+- Password reset with email-based recovery
+- User profile management with preferences
+
+### Data Security
+- Row Level Security (RLS) policies ensure complete data isolation
+- Each user can only access their own entries and tags
+- Database-level security with automatic user filtering
+- Secure authentication context with proper state management
 
 ### Entry Management
-- **EntryViewer**: Display and edit individual entries
-- **EntryForm**: Create and edit entry form
-- **EntryCard**: Entry list item component
+- Rich text editor with markdown support
+- User-specific entry creation, editing, and deletion
+- Entry versioning and history tracking per user
+- Advanced search within user's own data
+- Tag-based organization with user isolation
 
 ### Tag System
-- **TagManager**: Create, edit, and delete tags
-- **SearchFilters**: Advanced filtering interface
-
-### Layout
-- **AppLayout**: Main application layout
-- **Sidebar**: Navigation and tag management
-- **ContentListPanel**: Entry listing with filters
-
-## Features in Detail
-
-### Entry Creation
-- Rich text editor with markdown support
-- Image upload via drag & drop
-- Tag assignment and creation
-- Automatic summary generation
-
-### Search & Filter
-- Real-time search across titles and content
-- Time-based filtering (Last week, month, etc.)
-- Tag-based filtering
-- Sortable results
-
-### Tag Management
-- Create tags with custom colors
-- Edit existing tags
-- Delete unused tags
-- Automatic tag creation from entries
-
-### Export System
-- Multiple export formats
-- Individual and bulk export
-- Customizable export options
+- User-specific tag creation and management
+- Color-coded tags with customizable colors
+- Tag usage statistics and cleanup
+- Automatic tag filtering by user
 
 ## Development
 
 ### Commands
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-npm run seed         # Seed database with sample data
-npm run clear-db     # Clear database (development only)
+npm run dev              # Start development server
+npm run build            # Build for production
+npm run start            # Start production server
+npm run lint             # Run ESLint
+npm run create-admin     # Create admin user for testing
+npm run migrate-auth     # Migrate existing data to multi-user
+npm run seed             # Seed database with sample data
+npm run clear-db         # Clear database (development only)
 ```
+
+### Testing Authentication
+1. Run the application: `npm run dev`
+2. Visit the landing page
+3. Sign up for a new account or use admin credentials
+4. Test entry creation, editing, and data isolation
+5. Try signing out and back in with different users
 
 ### Docker Commands
 ```bash
@@ -229,11 +271,30 @@ docker-compose logs     # View logs
 2. Create a feature branch
 3. Make your changes
 4. Add tests if applicable
-5. Submit a pull request
+5. Ensure authentication and security work correctly
+6. Submit a pull request
 
 ## Changelog
 
-### v0.0.3 (Latest) - Database Integration
+### v0.0.4 (Latest) - Multi-User Authentication & Security
+- ✨ **NEW**: Complete multi-user authentication system
+- ✨ **NEW**: Row Level Security (RLS) for data isolation
+- ✨ **NEW**: User profile management
+- ✨ **NEW**: Password reset flow with email recovery
+- ✨ **NEW**: Professional landing page for unauthenticated users
+- ✨ **NEW**: Toast notifications for real-time feedback
+- ✨ **NEW**: Password strength validation with visual indicators
+- ✨ **NEW**: Enhanced error handling and user experience
+- ✨ **NEW**: Remember me functionality
+- ✨ **NEW**: Email confirmation flow
+- 🔧 **IMPROVED**: Database architecture for multi-user support
+- 🔧 **IMPROVED**: Security with enterprise-grade RLS policies
+- 🔧 **IMPROVED**: Performance with optimized database queries
+- 🔧 **IMPROVED**: User interface with professional design
+- 📚 **DOCS**: Comprehensive authentication and setup documentation
+- 🛠️ **DEV**: Admin user creation and migration utilities
+
+### v0.0.3 - Database Integration
 - ✨ **NEW**: Full Supabase database integration
 - ✨ **NEW**: Persistent data storage across sessions
 - ✨ **NEW**: Real-time data synchronization
@@ -255,14 +316,29 @@ docker-compose logs     # View logs
 - 🔍 **NEW**: Search functionality
 - 🎨 **NEW**: Modern UI with Tailwind CSS
 
+## Security
+
+Project Diary v0.0.4 implements enterprise-grade security:
+
+- **Row Level Security (RLS)**: Database-level data isolation
+- **User Authentication**: Secure email/password system
+- **Session Management**: Token-based authentication with refresh
+- **Data Isolation**: Complete separation of user data
+- **Password Security**: Strength validation and secure hashing
+- **Email Verification**: Account confirmation for security
+
 ## License
 
 This project is licensed under the MIT License.
 
 ## Acknowledgments
 
-- Built with Next.js and TypeScript
-- Database powered by Supabase
+- Built with Next.js 14 and TypeScript
+- Database and authentication powered by Supabase
 - Icons by Lucide React
 - Styled with Tailwind CSS
-- Inspired by modern note-taking applications
+- Inspired by modern journaling applications
+
+---
+
+**Project Diary v0.0.4** - Your secure, personal digital journal with multi-user support and enterprise-grade security.

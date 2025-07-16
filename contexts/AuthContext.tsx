@@ -4,9 +4,10 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { auth, userProfile, AuthState, UserProfile } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+import toast from 'react-hot-toast';
 
 interface AuthContextType extends AuthState {
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   signUp: (email: string, password: string, fullName?: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -94,13 +95,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, rememberMe = false) => {
     setLoading(true);
     try {
-      await auth.signIn(email, password);
+      await auth.signIn(email, password, rememberMe);
+      toast.success('Successfully signed in!');
       // The onAuthStateChange listener will handle the state updates
     } catch (error) {
       setLoading(false);
+      toast.error('Failed to sign in. Please check your credentials.');
       throw error;
     }
   };
@@ -109,9 +112,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setLoading(true);
     try {
       await auth.signUp(email, password, fullName);
+      toast.success('Account created! Please check your email to confirm your account.');
       // The onAuthStateChange listener will handle the state updates
     } catch (error) {
       setLoading(false);
+      toast.error('Failed to create account. Please try again.');
       throw error;
     }
   };
@@ -120,15 +125,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setLoading(true);
     try {
       await auth.signOut();
+      toast.success('Successfully signed out!');
       // The onAuthStateChange listener will handle the state updates
     } catch (error) {
       setLoading(false);
+      toast.error('Failed to sign out. Please try again.');
       throw error;
     }
   };
 
   const resetPassword = async (email: string) => {
-    await auth.resetPassword(email);
+    try {
+      await auth.resetPassword(email);
+      toast.success('Password reset email sent! Check your inbox.');
+    } catch (error) {
+      toast.error('Failed to send password reset email. Please try again.');
+      throw error;
+    }
   };
 
   const updateProfile = async (profileData: Partial<UserProfile>) => {
@@ -136,12 +149,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       throw new Error('User not authenticated');
     }
 
-    const updatedProfile = await userProfile.upsertProfile(profileData);
-    setProfile(updatedProfile);
+    try {
+      const updatedProfile = await userProfile.upsertProfile(profileData);
+      setProfile(updatedProfile);
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      toast.error('Failed to update profile. Please try again.');
+      throw error;
+    }
   };
 
   const updatePassword = async (password: string) => {
-    await auth.updatePassword(password);
+    try {
+      await auth.updatePassword(password);
+      toast.success('Password updated successfully!');
+    } catch (error) {
+      toast.error('Failed to update password. Please try again.');
+      throw error;
+    }
   };
 
   const refreshProfile = async () => {

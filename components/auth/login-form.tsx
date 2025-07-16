@@ -1,23 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { auth } from "@/lib/auth";
 
 interface LoginFormProps {
   onSuccess?: () => void;
   onSwitchToSignup?: () => void;
+  onForgotPassword?: () => void;
 }
 
-export function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProps) {
+export function LoginForm({ onSuccess, onSwitchToSignup, onForgotPassword }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
 
   const { signIn } = useAuth();
+
+  // Load remember me preference on component mount
+  useEffect(() => {
+    setRememberMe(auth.getRememberMe());
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +38,7 @@ export function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProps) {
     setError("");
 
     try {
-      await signIn(email, password);
+      await signIn(email, password, rememberMe);
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to sign in");
@@ -117,6 +125,20 @@ export function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProps) {
           </div>
         </div>
 
+        <div className="flex items-center">
+          <input
+            id="remember-me"
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+            disabled={isLoading}
+          />
+          <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+            Remember me
+          </label>
+        </div>
+
         <button
           type="submit"
           disabled={isLoading}
@@ -139,14 +161,23 @@ export function LoginForm({ onSuccess, onSwitchToSignup }: LoginFormProps) {
         </button>
       </form>
 
-      <div className="mt-6 text-center">
+      <div className="mt-6 text-center space-y-2">
         <button
-          onClick={onSwitchToSignup}
-          className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+          onClick={onForgotPassword}
+          className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
           disabled={isLoading}
         >
-          Don't have an account? Sign up
+          Forgot your password?
         </button>
+        <div>
+          <button
+            onClick={onSwitchToSignup}
+            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+            disabled={isLoading}
+          >
+            Don't have an account? Sign up
+          </button>
+        </div>
       </div>
     </div>
   );

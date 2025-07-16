@@ -2,6 +2,38 @@ import { Entry } from "@/data/types";
 import { formatDate } from "@/lib/utils";
 import { getTagByName } from "@/lib/tags";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+
+// Helper component to display a tag with async color loading
+function TagDisplay({ tagName }: { tagName: string }) {
+  const [tagColor, setTagColor] = useState('#3B82F6');
+  
+  useEffect(() => {
+    const loadTag = async () => {
+      try {
+        const tag = await getTagByName(tagName);
+        if (tag) {
+          setTagColor(tag.color);
+        }
+      } catch (error) {
+        console.error('Failed to load tag:', error);
+      }
+    };
+    loadTag();
+  }, [tagName]);
+  
+  return (
+    <span
+      className="px-2 py-1 text-xs rounded-full text-white"
+      style={{ 
+        backgroundColor: tagColor,
+        color: 'white'
+      }}
+    >
+      {tagName}
+    </span>
+  );
+}
 
 interface EntryCardProps {
   entry: Entry;
@@ -37,21 +69,9 @@ export function EntryCard({ entry, isSelected = false, onClick }: EntryCardProps
       
       {entry.tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
-          {entry.tags.map((tagName, index) => {
-            const tag = getTagByName(tagName);
-            return (
-              <span
-                key={index}
-                className="px-2 py-1 text-xs rounded-full text-white"
-                style={{ 
-                  backgroundColor: tag?.color || '#3B82F6',
-                  color: 'white'
-                }}
-              >
-                {tagName}
-              </span>
-            );
-          })}
+          {entry.tags.map((tagName, index) => (
+            <TagDisplay key={index} tagName={tagName} />
+          ))}
         </div>
       )}
     </div>

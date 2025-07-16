@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SearchFilters } from "@/data/types";
 import { getAllTags } from "@/lib/tags";
 import { Search, Filter, X, Calendar, Tag, ArrowUp, ArrowDown } from "lucide-react";
@@ -16,7 +16,21 @@ export function SearchFiltersComponent({ filters, onFiltersChange, className }: 
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<string>("");
   
-  const availableTags = getAllTags();
+  const [availableTags, setAvailableTags] = useState<any[]>([]);
+
+  // Load available tags on mount
+  useEffect(() => {
+    const loadTags = async () => {
+      try {
+        const tags = await getAllTags();
+        setAvailableTags(tags);
+      } catch (error) {
+        console.error('Failed to load tags:', error);
+        setAvailableTags([]);
+      }
+    };
+    loadTags();
+  }, []);
   const selectedTags = filters.tags || [];
 
   const handleQueryChange = (query: string) => {

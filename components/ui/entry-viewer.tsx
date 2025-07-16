@@ -13,6 +13,37 @@ import { VersionHistory } from "./version-history";
 import { ImageModal } from "./image-modal";
 import { Edit, Calendar, Tag, Eye, Save, X, Download, MoreHorizontal, History, Trash2, Plus, Sparkles } from "lucide-react";
 
+// Helper component to display a tag with async color loading
+function TagDisplay({ tagName }: { tagName: string }) {
+  const [tagColor, setTagColor] = useState('#3B82F6');
+  
+  useEffect(() => {
+    const loadTag = async () => {
+      try {
+        const tag = await getTagByName(tagName);
+        if (tag) {
+          setTagColor(tag.color);
+        }
+      } catch (error) {
+        console.error('Failed to load tag:', error);
+      }
+    };
+    loadTag();
+  }, [tagName]);
+  
+  return (
+    <span
+      className="px-3 py-1 text-sm rounded-full text-white"
+      style={{ 
+        backgroundColor: tagColor,
+        color: 'white'
+      }}
+    >
+      {tagName}
+    </span>
+  );
+}
+
 interface EntryViewerProps {
   selectedEntry?: Entry | null;
   onEntryUpdate?: () => void;
@@ -56,16 +87,20 @@ export function EntryViewer({ selectedEntry = null, onEntryUpdate, isEntryListCo
     setIsEditing(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (selectedEntry) {
-      updateEntry(selectedEntry.id, {
-        title: editTitle,
-        content: editContent,
-        tags: editTags,
-        images: editImages,
-      });
-      onEntryUpdate?.();
-      setIsEditing(false);
+      try {
+        await updateEntry(selectedEntry.id, {
+          title: editTitle,
+          content: editContent,
+          tags: editTags,
+          images: editImages,
+        });
+        onEntryUpdate?.();
+        setIsEditing(false);
+      } catch (error) {
+        console.error('Failed to update entry:', error);
+      }
     }
   };
 
@@ -79,30 +114,39 @@ export function EntryViewer({ selectedEntry = null, onEntryUpdate, isEntryListCo
     setIsEditing(false);
   };
 
-  const handleRestoreVersion = (version: EntryHistory) => {
+  const handleRestoreVersion = async (version: EntryHistory) => {
     if (selectedEntry) {
-      updateEntry(selectedEntry.id, {
-        title: version.title,
-        content: version.content,
-        // Keep current tags and images as they weren't in the history
-        tags: selectedEntry.tags,
-        images: selectedEntry.images,
-      });
-      onEntryUpdate?.();
+      try {
+        await updateEntry(selectedEntry.id, {
+          title: version.title,
+          content: version.content,
+          // Keep current tags and images as they weren't in the history
+          tags: selectedEntry.tags,
+          images: selectedEntry.images,
+        });
+        onEntryUpdate?.();
+      } catch (error) {
+        console.error('Failed to restore version:', error);
+      }
     }
   };
 
-  const handleDeleteEntry = () => {
+  const handleDeleteEntry = async () => {
     if (!selectedEntry) {
       return;
     }
     
     if (confirm(`Are you sure you want to delete "${selectedEntry.title}"? This action cannot be undone.`)) {
-      const success = deleteEntry(selectedEntry.id);
-      
-      if (success) {
-        onEntryUpdate?.();
-      } else {
+      try {
+        const success = await deleteEntry(selectedEntry.id);
+        
+        if (success) {
+          onEntryUpdate?.();
+        } else {
+          alert('Failed to delete entry. Please try again.');
+        }
+      } catch (error) {
+        console.error('Failed to delete entry:', error);
         alert('Failed to delete entry. Please try again.');
       }
     }
@@ -276,21 +320,9 @@ export function EntryViewer({ selectedEntry = null, onEntryUpdate, isEntryListCo
         <div className="flex items-center gap-2 mb-6">
           <Tag size={16} className="text-gray-500" />
           <div className="flex flex-wrap gap-2">
-            {selectedEntry.tags.map((tagName, index) => {
-              const tag = getTagByName(tagName);
-              return (
-                <span
-                  key={index}
-                  className="px-3 py-1 text-sm rounded-full text-white"
-                  style={{ 
-                    backgroundColor: tag?.color || '#3B82F6',
-                    color: 'white'
-                  }}
-                >
-                  {tagName}
-                </span>
-              );
-            })}
+            {selectedEntry.tags.map((tagName, index) => (
+              <TagDisplay key={index} tagName={tagName} />
+            ))}
           </div>
         </div>
       )}

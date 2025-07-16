@@ -16,8 +16,16 @@ export function RecentEntries({ refreshKey, onEntrySelect, selectedEntryId }: Re
   const [recentEntries, setRecentEntries] = useState<Entry[]>([]);
 
   useEffect(() => {
-    const entries = getRecentlyAccessedEntries();
-    setRecentEntries(entries);
+    const loadRecentEntries = async () => {
+      try {
+        const entries = await getRecentlyAccessedEntries();
+        setRecentEntries(entries);
+      } catch (error) {
+        console.error('Failed to load recent entries:', error);
+        setRecentEntries([]);
+      }
+    };
+    loadRecentEntries();
   }, [refreshKey]);
 
   if (recentEntries.length === 0) {

@@ -30,9 +30,17 @@ export function ContentListPanel({ selectedEntry, onEntrySelect, onEntriesUpdate
     sortOrder: 'desc',
   });
 
-  const loadEntries = useCallback(() => {
-    const filteredEntries = searchEntries(filters);
-    setEntries(filteredEntries);
+  const loadEntries = useCallback(async () => {
+    console.log('🔄 ContentListPanel: loadEntries called with filters:', filters);
+    try {
+      console.log('📞 ContentListPanel: Calling searchEntries...');
+      const filteredEntries = await searchEntries(filters);
+      console.log('✅ ContentListPanel: searchEntries returned:', filteredEntries);
+      setEntries(filteredEntries);
+    } catch (error) {
+      console.error('❌ ContentListPanel: Failed to load entries:', error);
+      setEntries([]);
+    }
   }, [filters, refreshKey]);
 
   useEffect(() => {
@@ -58,12 +66,16 @@ export function ContentListPanel({ selectedEntry, onEntrySelect, onEntriesUpdate
     setIsCreateModalOpen(true);
   };
 
-  const handleSaveEntry = (data: { title: string; content: string; tags: string[]; images: string[] }) => {
-    const newEntry = createEntry(data.title, data.content, data.tags, data.images);
-    loadEntries(); // Refresh local entries
-    onEntriesUpdate(); // Notify parent components
-    onEntrySelect(newEntry.id); // Select the newly created entry
-    setIsCreateModalOpen(false);
+  const handleSaveEntry = async (data: { title: string; content: string; tags: string[]; images: string[] }) => {
+    try {
+      const newEntry = await createEntry(data.title, data.content, data.tags, data.images);
+      loadEntries(); // Refresh local entries
+      onEntriesUpdate(); // Notify parent components
+      onEntrySelect(newEntry.id); // Select the newly created entry
+      setIsCreateModalOpen(false);
+    } catch (error) {
+      console.error('Failed to create entry:', error);
+    }
   };
 
   const handleCancelCreate = () => {

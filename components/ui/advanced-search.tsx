@@ -25,50 +25,70 @@ export function AdvancedSearch({ onEntrySelect, selectedEntryId, onViewChange }:
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
-  const availableTags = getAllTags();
+  const [availableTags, setAvailableTags] = useState<any[]>([]);
+
+  // Load available tags on mount
+  useEffect(() => {
+    const loadTags = async () => {
+      try {
+        const tags = await getAllTags();
+        setAvailableTags(tags);
+      } catch (error) {
+        console.error('Failed to load tags:', error);
+        setAvailableTags([]);
+      }
+    };
+    loadTags();
+  }, []);
 
   // Perform search when filters change
   useEffect(() => {
     performSearch();
   }, [searchQuery, selectedTags, dateFrom, dateTo, sortBy, sortOrder, contentFilter]);
 
-  const performSearch = () => {
+  const performSearch = async () => {
     setIsSearching(true);
     
-    const filters: SearchFilters = {
-      query: searchQuery,
-      tags: selectedTags,
-      sortBy,
-      sortOrder,
-    };
+    try {
+      const filters: SearchFilters = {
+        query: searchQuery,
+        tags: selectedTags,
+        sortBy,
+        sortOrder,
+      };
 
-    let searchResults = searchEntries(filters);
+      let searchResults = await searchEntries(filters);
 
-    // Apply content filter
-    if (contentFilter.trim()) {
-      searchResults = searchResults.filter(entry => 
-        entry.content.toLowerCase().includes(contentFilter.toLowerCase())
-      );
+      // Apply content filter
+      if (contentFilter.trim()) {
+        searchResults = searchResults.filter(entry => 
+          entry.content.toLowerCase().includes(contentFilter.toLowerCase())
+        );
+      }
+
+      // Apply date filters
+      if (dateFrom) {
+        const fromDate = new Date(dateFrom);
+        searchResults = searchResults.filter(entry => 
+          new Date(entry.createdAt) >= fromDate
+        );
+      }
+
+      if (dateTo) {
+        const toDate = new Date(dateTo);
+        toDate.setHours(23, 59, 59, 999); // End of day
+        searchResults = searchResults.filter(entry => 
+          new Date(entry.createdAt) <= toDate
+        );
+      }
+
+      setResults(searchResults);
+    } catch (error) {
+      console.error('Failed to perform search:', error);
+      setResults([]);
+    } finally {
+      setIsSearching(false);
     }
-
-    // Apply date filters
-    if (dateFrom) {
-      const fromDate = new Date(dateFrom);
-      searchResults = searchResults.filter(entry => 
-        new Date(entry.createdAt) >= fromDate
-      );
-    }
-
-    if (dateTo) {
-      const toDate = new Date(dateTo);
-      toDate.setHours(23, 59, 59, 999); // End of day
-      searchResults = searchResults.filter(entry => 
-        new Date(entry.createdAt) <= toDate
-      );
-    }
-
-    setResults(searchResults);
-    setIsSearching(false);
   };
 
   const handleTagToggle = (tagName: string) => {

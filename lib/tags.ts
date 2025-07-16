@@ -2,20 +2,42 @@ import { Tag } from '@/data/types';
 import { mockTags } from '@/data/mockData';
 import { generateId } from './utils';
 
-export function getAllTags(): Tag[] {
+// Check if we should use database or mock data
+const USE_DATABASE = process.env.NEXT_PUBLIC_USE_DATABASE === 'true';
+
+// Import database operations conditionally
+let dbTags: any;
+if (USE_DATABASE) {
+  dbTags = require('./tags-db');
+}
+
+export async function getAllTags(): Promise<Tag[]> {
+  if (USE_DATABASE && dbTags) {
+    return await dbTags.getAllTags();
+  }
   return mockTags.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function getTagById(id: string): Tag | undefined {
+export async function getTagById(id: string): Promise<Tag | undefined> {
+  if (USE_DATABASE && dbTags) {
+    return await dbTags.getTagById(id);
+  }
   return mockTags.find(tag => tag.id === id);
 }
 
-export function getTagByName(name: string): Tag | undefined {
+export async function getTagByName(name: string): Promise<Tag | undefined> {
+  if (USE_DATABASE && dbTags) {
+    return await dbTags.getTagByName(name);
+  }
   return mockTags.find(tag => tag.name.toLowerCase() === name.toLowerCase());
 }
 
-export function createTag(name: string, color?: string): Tag {
-  const existingTag = getTagByName(name);
+export async function createTag(name: string, color?: string): Promise<Tag> {
+  if (USE_DATABASE && dbTags) {
+    return await dbTags.createTag(name, color);
+  }
+  
+  const existingTag = await getTagByName(name);
   if (existingTag) return existingTag;
 
   // Use random color if not specified
@@ -33,7 +55,11 @@ export function createTag(name: string, color?: string): Tag {
   return newTag;
 }
 
-export function updateTag(id: string, updates: Partial<Pick<Tag, 'name' | 'color'>>): Tag | null {
+export async function updateTag(id: string, updates: Partial<Pick<Tag, 'name' | 'color'>>): Promise<Tag | null> {
+  if (USE_DATABASE && dbTags) {
+    return await dbTags.updateTag(id, updates);
+  }
+  
   const tagIndex = mockTags.findIndex(tag => tag.id === id);
   if (tagIndex === -1) return null;
 
@@ -46,7 +72,11 @@ export function updateTag(id: string, updates: Partial<Pick<Tag, 'name' | 'color
   return updatedTag;
 }
 
-export function deleteTag(id: string): boolean {
+export async function deleteTag(id: string): Promise<boolean> {
+  if (USE_DATABASE && dbTags) {
+    return await dbTags.deleteTag(id);
+  }
+  
   const tagIndex = mockTags.findIndex(tag => tag.id === id);
   if (tagIndex === -1) return false;
 

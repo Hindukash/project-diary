@@ -24,31 +24,53 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentView, setCurrentView] = useState('dashboard');
-  const [isEntryListCollapsed, setIsEntryListCollapsed] = useState(true);
+  const [isEntryListCollapsed, setIsEntryListCollapsed] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Initialize with first entry on mount
   useEffect(() => {
-    const entries = getAllEntries();
-    if (entries.length > 0) {
-      setSelectedEntryId(entries[0].id);
-      addToRecentlyAccessed(entries[0].id);
-    }
+    const initializeEntries = async () => {
+      try {
+        const entries = await getAllEntries();
+        if (entries.length > 0) {
+          setSelectedEntryId(entries[0].id);
+          addToRecentlyAccessed(entries[0].id);
+        }
+      } catch (error) {
+        console.error('Failed to initialize entries:', error);
+      }
+    };
+    initializeEntries();
   }, []);
 
   // Update selected entry when entries change
   useEffect(() => {
-    const entries = getAllEntries();
-    if (entries.length > 0 && !selectedEntryId) {
-      setSelectedEntryId(entries[0].id);
-      addToRecentlyAccessed(entries[0].id);
-    }
+    const updateEntries = async () => {
+      try {
+        const entries = await getAllEntries();
+        if (entries.length > 0 && !selectedEntryId) {
+          setSelectedEntryId(entries[0].id);
+          addToRecentlyAccessed(entries[0].id);
+        }
+      } catch (error) {
+        console.error('Failed to update entries:', error);
+      }
+    };
+    updateEntries();
   }, [refreshKey]);
 
   useEffect(() => {
     if (selectedEntryId) {
-      const entry = getEntryById(selectedEntryId);
-      setSelectedEntry(entry || null);
+      const loadEntry = async () => {
+        try {
+          const entry = await getEntryById(selectedEntryId);
+          setSelectedEntry(entry || null);
+        } catch (error) {
+          console.error('Failed to load entry:', error);
+          setSelectedEntry(null);
+        }
+      };
+      loadEntry();
     }
   }, [selectedEntryId, refreshKey]);
 
@@ -60,14 +82,21 @@ export function AppLayout({ children }: AppLayoutProps) {
   const handleEntriesUpdate = () => {
     setRefreshKey(prev => prev + 1);
     // Check if the currently selected entry still exists
-    setTimeout(() => {
-      if (selectedEntryId && !getEntryById(selectedEntryId)) {
-        const entries = getAllEntries();
-        if (entries.length > 0) {
-          setSelectedEntryId(entries[0].id);
-          addToRecentlyAccessed(entries[0].id);
-        } else {
-          setSelectedEntryId(null);
+    setTimeout(async () => {
+      if (selectedEntryId) {
+        try {
+          const entry = await getEntryById(selectedEntryId);
+          if (!entry) {
+            const entries = await getAllEntries();
+            if (entries.length > 0) {
+              setSelectedEntryId(entries[0].id);
+              addToRecentlyAccessed(entries[0].id);
+            } else {
+              setSelectedEntryId(null);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to check entry existence:', error);
         }
       }
     }, 100);
@@ -85,11 +114,15 @@ export function AppLayout({ children }: AppLayoutProps) {
     setIsCreateModalOpen(true);
   };
 
-  const handleSaveEntry = (data: { title: string; content: string; tags: string[]; images: string[] }) => {
-    const newEntry = createEntry(data.title, data.content, data.tags, data.images);
-    handleEntriesUpdate(); // Refresh entries
-    handleEntrySelect(newEntry.id); // Select the newly created entry
-    setIsCreateModalOpen(false);
+  const handleSaveEntry = async (data: { title: string; content: string; tags: string[]; images: string[] }) => {
+    try {
+      const newEntry = await createEntry(data.title, data.content, data.tags, data.images);
+      handleEntriesUpdate(); // Refresh entries
+      handleEntrySelect(newEntry.id); // Select the newly created entry
+      setIsCreateModalOpen(false);
+    } catch (error) {
+      console.error('Failed to create entry:', error);
+    }
   };
 
   const handleCancelCreate = () => {

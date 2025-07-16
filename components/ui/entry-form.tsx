@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Entry } from "@/data/types";
 import { RichTextEditor } from "./rich-text-editor";
 import { ImageUpload } from "./image-upload";
@@ -21,7 +21,21 @@ export function EntryForm({ entry, onSave, onCancel }: EntryFormProps) {
   const [newTag, setNewTag] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const availableTags = getAllTags();
+  const [availableTags, setAvailableTags] = useState<any[]>([]);
+
+  // Load available tags on mount
+  useEffect(() => {
+    const loadTags = async () => {
+      try {
+        const tags = await getAllTags();
+        setAvailableTags(tags);
+      } catch (error) {
+        console.error('Failed to load tags:', error);
+        setAvailableTags([]);
+      }
+    };
+    loadTags();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

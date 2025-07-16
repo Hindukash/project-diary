@@ -1,0 +1,183 @@
+import { Tag } from '@/data/types';
+import { supabase } from './supabase';
+
+// Helper function to retry operations
+async function retryOperation<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  delay: number = 1000
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      console.warn(`Operation failed (attempt ${i + 1}/${maxRetries}):`, error);
+      
+      if (i < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  throw lastError!;
+}
+
+// Helper function to convert database tag to app tag format
+function dbTagToAppTag(dbTag: any): Tag {
+  return {
+    id: dbTag.id,
+    name: dbTag.name,
+    color: dbTag.color,
+    createdAt: new Date(dbTag.created_at)
+  };
+}
+
+export async function getAllTags(): Promise<Tag[]> {
+  return retryOperation(async () => {
+    const { data: tags, error } = await supabase
+      .from('tags')
+      .select('*')
+      .order('name');
+
+    if (error) {
+      console.error('Error fetching tags:', error);
+      throw new Error(`Failed to fetch tags: ${error.message}`);
+    }
+
+    return tags.map(dbTagToAppTag);
+  });
+}
+
+export async function getTagById(id: string): Promise<Tag | undefined> {
+  return retryOperation(async () => {
+    const { data: tag, error } = await supabase
+      .from('tags')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No rows returned
+        return undefined;
+      }
+      console.error('Error fetching tag:', error);
+      throw new Error(`Failed to fetch tag: ${error.message}`);
+    }
+
+    return dbTagToAppTag(tag);
+  });
+}
+
+export async function getTagByName(name: string): Promise<Tag | undefined> {
+  return retryOperation(async () => {
+    const { data: tag, error } = await supabase
+      .from('tags')
+      .select('*')
+      .ilike('name', name)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No rows returned
+        return undefined;
+      }
+      console.error('Error fetching tag by name:', error);
+      throw new Error(`Failed to fetch tag by name: ${error.message}`);
+    }
+
+    return dbTagToAppTag(tag);
+  });
+}
+
+export async function createTag(name: string, color?: string): Promise<Tag> {
+  return retryOperation(async () => {
+    // Check if tag already exists
+    const existingTag = await getTagByName(name);
+    if (existingTag) {
+      return existingTag;
+    }
+
+    // Use random color if not specified
+    const colors = getTagColors();
+    const randomColor = color || colors[Math.floor(Math.random() * colors.length)];
+
+    const { data: newTag, error } = await supabase
+      .from('tags')
+      .insert([
+        {
+          name,
+          color: randomColor,
+          created_at: new Date().toISOString()
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating tag:', error);
+      throw new Error(`Failed to create tag: ${error.message}`);
+    }
+
+    return dbTagToAppTag(newTag);
+  });
+}
+
+export async function updateTag(
+  id: string,
+  updates: Partial<Pick<Tag, 'name' | 'color'>>
+): Promise<Tag | null> {
+  return retryOperation(async () => {
+    const { data: updatedTag, error } = await supabase
+      .from('tags')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No rows returned
+        return null;
+      }
+      console.error('Error updating tag:', error);
+      throw new Error(`Failed to update tag: ${error.message}`);
+    }
+
+    return dbTagToAppTag(updatedTag);
+  });
+}
+
+export async function deleteTag(id: string): Promise<boolean> {
+  return retryOperation(async () => {
+    const { error } = await supabase
+      .from('tags')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting tag:', error);
+      throw new Error(`Failed to delete tag: ${error.message}`);
+    }
+
+    return true;
+  });
+}
+
+export function getTagColors(): string[] {
+  return [
+    '#3B82F6', // Blue
+    '#10B981', // Green
+    '#F59E0B', // Amber
+    '#8B5CF6', // Purple
+    '#EF4444', // Red
+    '#06B6D4', // Cyan
+    '#F97316', // Orange
+    '#84CC16', // Lime
+    '#EC4899', // Pink
+    '#6B7280', // Gray
+  ];
+}

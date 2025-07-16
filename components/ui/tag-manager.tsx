@@ -24,34 +24,58 @@ export function TagManager({ onTagsUpdate, className, refreshKey }: TagManagerPr
 
   const colors = getTagColors();
 
-  const refreshTags = () => {
-    const updatedTags = getAllTags();
-    setTags([...updatedTags]); // Force new array reference
+  const refreshTags = async () => {
+    try {
+      const updatedTags = await getAllTags();
+      setTags([...updatedTags]); // Force new array reference
+    } catch (error) {
+      console.error('Failed to refresh tags:', error);
+    }
   };
 
   // Load tags on component mount
   useEffect(() => {
-    const updatedTags = getAllTags();
-    setTags([...updatedTags]);
+    const loadTags = async () => {
+      try {
+        const updatedTags = await getAllTags();
+        setTags([...updatedTags]);
+      } catch (error) {
+        console.error('Failed to load tags:', error);
+        setTags([]);
+      }
+    };
+    loadTags();
   }, []);
 
   // Refresh tags when refreshKey changes
   useEffect(() => {
     if (refreshKey !== undefined && refreshKey > 0) {
-      const updatedTags = getAllTags();
-      setTags([...updatedTags]);
+      const loadTags = async () => {
+        try {
+          const updatedTags = await getAllTags();
+          setTags([...updatedTags]);
+        } catch (error) {
+          console.error('Failed to refresh tags:', error);
+        }
+      };
+      loadTags();
     }
   }, [refreshKey]);
 
-  const handleCreateTag = () => {
+  const handleCreateTag = async () => {
     if (newTagName.trim()) {
-      createTag(newTagName.trim(), newTagColor);
-      setNewTagName("");
-      setNewTagColor("#3B82F6");
-      setIsCreating(false);
-      // Refresh tags locally
-      const updatedTags = getAllTags();
-      setTags([...updatedTags]);
+      try {
+        await createTag(newTagName.trim(), newTagColor);
+        setNewTagName("");
+        setNewTagColor("#3B82F6");
+        setIsCreating(false);
+        // Refresh tags locally
+        const updatedTags = await getAllTags();
+        setTags([...updatedTags]);
+        onTagsUpdate?.();
+      } catch (error) {
+        console.error('Failed to create tag:', error);
+      }
     }
   };
 
@@ -61,22 +85,32 @@ export function TagManager({ onTagsUpdate, className, refreshKey }: TagManagerPr
     setEditTagColor(tag.color);
   };
 
-  const handleUpdateTag = (tagId: string) => {
+  const handleUpdateTag = async (tagId: string) => {
     if (editTagName.trim()) {
-      updateTag(tagId, { name: editTagName.trim(), color: editTagColor });
-      setEditingTag(null);
-      setEditTagName("");
-      setEditTagColor("");
-      const updatedTags = getAllTags();
-      setTags([...updatedTags]);
+      try {
+        await updateTag(tagId, { name: editTagName.trim(), color: editTagColor });
+        setEditingTag(null);
+        setEditTagName("");
+        setEditTagColor("");
+        const updatedTags = await getAllTags();
+        setTags([...updatedTags]);
+        onTagsUpdate?.();
+      } catch (error) {
+        console.error('Failed to update tag:', error);
+      }
     }
   };
 
-  const handleDeleteTag = (tagId: string) => {
+  const handleDeleteTag = async (tagId: string) => {
     if (confirm("Are you sure you want to delete this tag?")) {
-      deleteTag(tagId);
-      const updatedTags = getAllTags();
-      setTags([...updatedTags]);
+      try {
+        await deleteTag(tagId);
+        const updatedTags = await getAllTags();
+        setTags([...updatedTags]);
+        onTagsUpdate?.();
+      } catch (error) {
+        console.error('Failed to delete tag:', error);
+      }
     }
   };
 

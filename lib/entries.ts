@@ -3,6 +3,9 @@ import { mockEntries } from '@/data/mockData';
 import { generateId, extractTextFromMarkdown } from './utils';
 import { createTag, getTagByName } from './tags';
 
+// Recently accessed entries storage
+let recentlyAccessedEntries: string[] = [];
+
 export function getAllEntries(): Entry[] {
   return mockEntries.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
@@ -156,5 +159,29 @@ export function deleteEntry(id: string): boolean {
   }
 
   mockEntries.splice(entryIndex, 1);
+  
+  // Remove from recently accessed entries
+  recentlyAccessedEntries = recentlyAccessedEntries.filter(entryId => entryId !== id);
+  
   return true;
+}
+
+// Recently accessed entries functions
+export function addToRecentlyAccessed(entryId: string): void {
+  // Remove if already exists
+  recentlyAccessedEntries = recentlyAccessedEntries.filter(id => id !== entryId);
+  
+  // Add to beginning
+  recentlyAccessedEntries.unshift(entryId);
+  
+  // Keep only last 5
+  if (recentlyAccessedEntries.length > 5) {
+    recentlyAccessedEntries = recentlyAccessedEntries.slice(0, 5);
+  }
+}
+
+export function getRecentlyAccessedEntries(): Entry[] {
+  return recentlyAccessedEntries
+    .map(id => getEntryById(id))
+    .filter(entry => entry !== undefined) as Entry[];
 }

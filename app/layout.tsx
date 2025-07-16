@@ -21,9 +21,10 @@ export default function RootLayout({
       <body className={`${inter.className} h-screen`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
+          storageKey="project-diary-theme"
         >
           <AppLayout>{children}</AppLayout>
         </ThemeProvider>

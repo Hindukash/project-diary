@@ -10,9 +10,10 @@ import { Search, Calendar, Tag, FileText, Filter, X } from "lucide-react";
 interface AdvancedSearchProps {
   onEntrySelect: (entryId: string) => void;
   selectedEntryId?: string;
+  onViewChange?: (view: string) => void;
 }
 
-export function AdvancedSearch({ onEntrySelect, selectedEntryId }: AdvancedSearchProps) {
+export function AdvancedSearch({ onEntrySelect, selectedEntryId, onViewChange }: AdvancedSearchProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [dateFrom, setDateFrom] = useState("");
@@ -267,7 +268,14 @@ export function AdvancedSearch({ onEntrySelect, selectedEntryId }: AdvancedSearc
             {results.map(entry => (
               <div
                 key={entry.id}
-                onClick={() => onEntrySelect(entry.id)}
+                onClick={() => {
+                  // Switch to dashboard view first
+                  if (onViewChange) {
+                    onViewChange('dashboard');
+                  }
+                  // Then select the entry
+                  onEntrySelect(entry.id);
+                }}
                 className={`p-4 rounded-lg border cursor-pointer transition-colors ${
                   selectedEntryId === entry.id
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'

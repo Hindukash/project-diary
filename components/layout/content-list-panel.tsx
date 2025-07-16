@@ -8,16 +8,17 @@ import { SearchFiltersComponent } from "@/components/ui/search-filters";
 import { ExportDialog } from "@/components/ui/export-dialog";
 import { Entry, SearchFilters } from "@/data/types";
 import { getAllEntries, createEntry, searchEntries } from "@/lib/entries";
-import { Plus, Download, MoreHorizontal } from "lucide-react";
+import { Plus, Download, MoreHorizontal, PanelLeftClose } from "lucide-react";
 
 interface ContentListPanelProps {
   selectedEntry: string | null;
   onEntrySelect: (entryId: string) => void;
   onEntriesUpdate: () => void;
   refreshKey: number;
+  onToggleEntryList?: () => void;
 }
 
-export function ContentListPanel({ selectedEntry, onEntrySelect, onEntriesUpdate, refreshKey }: ContentListPanelProps) {
+export function ContentListPanel({ selectedEntry, onEntrySelect, onEntriesUpdate, refreshKey, onToggleEntryList }: ContentListPanelProps) {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
@@ -106,6 +107,16 @@ export function ContentListPanel({ selectedEntry, onEntrySelect, onEntriesUpdate
               </div>
             )}
           </div>
+          
+          {onToggleEntryList && (
+            <button
+              onClick={onToggleEntryList}
+              className="p-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              title="Hide entry list"
+            >
+              <PanelLeftClose size={16} />
+            </button>
+          )}
         </div>
       </div>
       

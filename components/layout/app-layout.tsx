@@ -1,16 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Header } from "./header";
 import { Sidebar } from "./sidebar";
 import { ContentListPanel } from "./content-list-panel";
 import { Entry } from "@/data/types";
-import { getAllEntries, getEntryById } from "@/lib/entries";
+import { getAllEntries, getEntryById, addToRecentlyAccessed, createEntry } from "@/lib/entries";
 
 // Import EntryViewer component
 import { EntryViewer } from "../ui/entry-viewer";
 import { AdvancedSearch } from "../ui/advanced-search";
 import { TagManager } from "../ui/tag-manager";
 import { ThemeToggle } from "../ui/theme-toggle";
+import { Modal } from "../ui/modal";
+import { EntryForm } from "../ui/entry-form";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -21,12 +24,15 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentView, setCurrentView] = useState('dashboard');
+  const [isEntryListCollapsed, setIsEntryListCollapsed] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Initialize with first entry on mount
   useEffect(() => {
     const entries = getAllEntries();
     if (entries.length > 0) {
       setSelectedEntryId(entries[0].id);
+      addToRecentlyAccessed(entries[0].id);
     }
   }, []);
 
@@ -35,6 +41,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     const entries = getAllEntries();
     if (entries.length > 0 && !selectedEntryId) {
       setSelectedEntryId(entries[0].id);
+      addToRecentlyAccessed(entries[0].id);
     }
   }, [refreshKey]);
 
@@ -47,6 +54,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const handleEntrySelect = (entryId: string) => {
     setSelectedEntryId(entryId);
+    addToRecentlyAccessed(entryId);
   };
 
   const handleEntriesUpdate = () => {
@@ -57,6 +65,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         const entries = getAllEntries();
         if (entries.length > 0) {
           setSelectedEntryId(entries[0].id);
+          addToRecentlyAccessed(entries[0].id);
         } else {
           setSelectedEntryId(null);
         }
@@ -68,37 +77,68 @@ export function AppLayout({ children }: AppLayoutProps) {
     setCurrentView(view);
   };
 
+  const toggleEntryList = () => {
+    setIsEntryListCollapsed(!isEntryListCollapsed);
+  };
+
+  const handleCreateEntry = () => {
+    setIsCreateModalOpen(true);
+  };
+
+  const handleSaveEntry = (data: { title: string; content: string; tags: string[]; images: string[] }) => {
+    const newEntry = createEntry(data.title, data.content, data.tags, data.images);
+    handleEntriesUpdate(); // Refresh entries
+    handleEntrySelect(newEntry.id); // Select the newly created entry
+    setIsCreateModalOpen(false);
+  };
+
+  const handleCancelCreate = () => {
+    setIsCreateModalOpen(false);
+  };
+
   const renderMainContent = () => {
     switch (currentView) {
       case 'dashboard':
         return (
-          <>
-            <ContentListPanel
-              selectedEntry={selectedEntryId}
-              onEntrySelect={handleEntrySelect}
-              onEntriesUpdate={handleEntriesUpdate}
-              refreshKey={refreshKey}
-            />
-            <main className="p-4">
+          <div className="flex h-full overflow-hidden">
+            <div className={`transition-all duration-300 border-r border-gray-200 dark:border-gray-700 ${
+              isEntryListCollapsed ? 'w-0 opacity-0' : 'w-2/5 opacity-100'
+            }`}>
+              {!isEntryListCollapsed && (
+                <ContentListPanel
+                  selectedEntry={selectedEntryId}
+                  onEntrySelect={handleEntrySelect}
+                  onEntriesUpdate={handleEntriesUpdate}
+                  refreshKey={refreshKey}
+                  onToggleEntryList={toggleEntryList}
+                />
+              )}
+            </div>
+            <div className={`flex-1 p-4 transition-all duration-300 ${
+              isEntryListCollapsed ? 'w-full' : 'w-3/5'
+            }`}>
               <EntryViewer
                 selectedEntry={selectedEntry}
                 onEntryUpdate={handleEntriesUpdate}
+                isEntryListCollapsed={isEntryListCollapsed}
+                onCreateEntry={handleCreateEntry}
               />
-            </main>
-          </>
+            </div>
+          </div>
         );
       case 'search':
         return (
-          <main className="col-span-2 p-4">
+          <div className="p-4">
             <AdvancedSearch 
               onEntrySelect={handleEntrySelect}
               selectedEntryId={selectedEntryId || undefined}
+              onViewChange={handleViewChange}
             />
-          </main>
+          </div>
         );
       case 'settings':
         return (
-          <main className="col-span-2 p-4">
+          <div className="p-4">
             <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-8 h-full">
               <h1 className="text-4xl font-bold mb-4 text-gray-900 dark:text-gray-100">Settings</h1>
               <div className="space-y-6">
@@ -162,7 +202,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 </div>
               </div>
             </div>
-          </main>
+          </div>
         );
       default:
         return null;
@@ -170,14 +210,40 @@ export function AppLayout({ children }: AppLayoutProps) {
   };
 
   return (
-    <div className="grid grid-cols-[280px_320px_1fr] h-screen">
-      <Sidebar 
+    <div className="h-screen flex flex-col">
+      <Header 
+        onSettingsClick={() => handleViewChange('settings')}
         currentView={currentView}
-        onViewChange={handleViewChange}
-        onTagsUpdate={handleEntriesUpdate}
-        refreshKey={refreshKey}
       />
-      {renderMainContent()}
+      <div className="flex-1 flex overflow-hidden">
+        <div className="w-[300px] border-r border-gray-200 dark:border-gray-700">
+          <Sidebar 
+            currentView={currentView}
+            onViewChange={handleViewChange}
+            onTagsUpdate={handleEntriesUpdate}
+            refreshKey={refreshKey}
+            onEntrySelect={handleEntrySelect}
+            selectedEntryId={selectedEntryId || undefined}
+            onToggleEntryList={toggleEntryList}
+            isEntryListCollapsed={isEntryListCollapsed}
+          />
+        </div>
+        <div className="flex-1 overflow-hidden">
+          {renderMainContent()}
+        </div>
+      </div>
+
+      {/* Create Entry Modal */}
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={handleCancelCreate}
+        title="Create New Entry"
+      >
+        <EntryForm
+          onSave={handleSaveEntry}
+          onCancel={handleCancelCreate}
+        />
+      </Modal>
     </div>
   );
 }
